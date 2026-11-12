@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 컬러 감정 기록장</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary-color: #475569;
+            --primary-hover: #334155;
+            --accent-color: #6366f1;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px 16px 40px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .layout-grid {
+                grid-template-columns: 1.2fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+
+        .section-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 1. 오늘의 감정 버튼 목록 */
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+        }
+
+        .emotion-btn {
+            background-color: #f1f5f9;
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 10px 4px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .emotion-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        .emotion-btn.selected {
+            background-color: #e0e7ff;
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        /* 2. 오늘의 색상 팔레트 */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .color-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .color-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .color-item:hover .color-swatch {
+            transform: scale(1.08);
+        }
+
+        /* 색상 선택 시 테두리 및 그림자 강조 (검정색 포함 가독성 개선) */
+        .color-item.selected .color-swatch {
+            border-color: #ffffff;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px var(--accent-color), var(--shadow-md);
+        }
+
+        .color-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .color-item.selected .color-name {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 선택 요약 내비게이션 */
+        .selection-summary {
+            background-color: #f8fafc;
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .summary-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* 텍스트 입력창 */
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+            background-color: #fafafa;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            border-color: var(--accent-color);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* 질문 목록 */
+        .question-item {
+            margin-bottom: 14px;
+        }
+
+        .question-item label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        /* 버튼 그룹 */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4f46e5;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e1;
+        }
+
+        /* 달력 스타일 */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .calendar-nav-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+        }
+
+        .calendar-nav-btn:hover {
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+
+        .calendar-day-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 6px 0;
+        }
+
+        .calendar-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.85rem;
+            position: relative;
+            border: 1px solid transparent;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .calendar-cell:hover {
+            background-color: #f1f5f9;
+        }
+
+        .calendar-cell.other-month {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .calendar-cell.other-month:hover {
+            background-color: transparent;
+        }
+
+        .calendar-cell.today {
+            font-weight: 700;
+            border-color: var(--accent-color);
+        }
+
+        .calendar-cell.selected-day {
+            background-color: #e0e7ff;
+        }
+
+        .calendar-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 2px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* 알림 및 대화상자 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            opacity: 0;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .record-view {
+            background-color: #f8fafc;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .record-view-item {
+            margin-bottom: 12px;
+        }
+
+        .record-view-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .record-view-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .record-view-content {
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>나만의 컬러 감정 기록장</h1>
+            <p>오늘의 마음을 색으로 발견하고 기록하는 시간</p>
+        </header>
+
+        <div class="layout-grid">
+            <!-- 왼쪽 컬럼: 기록 입력/수정 영역 -->
+            <main>
+                <div class="card">
+                    <div class="card-title">
+                        <span id="form-date-title">오늘의 기록 작성</span>
+                    </div>
+
+                    <!-- 1. 오늘의 감정 -->
+                    <div class="form-group">
+                        <label class="section-label">1. 오늘의 감정</label>
+                        <div class="emotion-grid" id="emotion-grid"></div>
+                    </div>
+
+                    <!-- 2. 오늘의 색상 -->
+                    <div class="form-group" style="margin-top: 24px;">
+                        <label class="section-label">2. 오늘의 색상</label>
+                        <div class="color-grid" id="color-grid"></div>
+                    </div>
+
+                    <!-- 선택 요약 -->
+                    <div class="selection-summary">
+                        <div>선택: </div>
+                        <div class="summary-badge">
+                            감정 - <span id="selected-emotion-text">미선택</span>
+                        </div>
+                        <div class="summary-badge">
+                            색상 - <span id="selected-color-dot" class="summary-color-dot" style="background-color: #ccc;"></span>
+                            <span id="selected-color-text">미선택</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. 색을 선택한 이유 -->
+                    <div class="form-group" style="margin-top: 24px;">
+                        <label class="section-label" for="reason-input">3. 색을 선택한 이유</label>
+                        <textarea id="reason-input" rows="3" placeholder="해당 색이 떠오른 이유를 적어주세요."></textarea>
+                    </div>
+
+                    <!-- 4. 자기 성찰 질문 -->
+                    <div class="form-group">
+                        <label class="section-label">4. 자기 성찰</label>
+                        <div class="question-item">
+                            <label for="q1-input">• 이 색은 오늘의 어떤 순간과 연결되나요?</label>
+                            <textarea id="q1-input" rows="2" placeholder="생각을 글로 작성해 보세요."></textarea>
+                        </div>
+                        <div class="question-item">
+                            <label for="q2-input">• 지금 내 마음이 가장 원하는 것은 무엇인가요?</label>
+                            <textarea id="q2-input" rows="2" placeholder="생각을 글로 작성해 보세요."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 5. 나에게 전하는 한마디 -->
+                    <div class="form-group">
+                        <label class="section-label" for="message-input">5. 나에게 전하는 한마디</label>
+                        <textarea id="message-input" rows="2" placeholder="자신에게 전하고 싶은 위로나 격려의 문장을 작성하세요."></textarea>
+                    </div>
+
+                    <!-- 6. 버튼 영역 (저장/수정/삭제) -->
+                    <div class="button-group">
+                        <button type="button" class="btn btn-primary" id="save-btn" onclick="saveRecord()">기록 저장</button>
+                        <button type="button" class="btn btn-danger" id="delete-btn" onclick="deleteRecord()" style="display: none;">삭제</button>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 오른쪽 컬럼: 달력 및 상세 조회 영역 -->
+            <aside>
+                <div class="card">
+                    <div class="card-title">기록 달력</div>
+                    <div class="calendar-header">
+                        <button class="calendar-nav-btn" onclick="changeMonth(-1)">&lt;</button>
+                        <h3 id="calendar-month-year"></h3>
+                        <button class="calendar-nav-btn" onclick="changeMonth(1)">&gt;</button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <div class="calendar-day-name">일</div>
+                        <div class="calendar-day-name">월</div>
+                        <div class="calendar-day-name">화</div>
+                        <div class="calendar-day-name">수</div>
+                        <div class="calendar-day-name">목</div>
+                        <div class="calendar-day-name">금</div>
+                        <div class="calendar-day-name">토</div>
+                    </div>
+                </div>
+
+                <!-- 선택 날짜 기록 미리보기/조회 카드 -->
+                <div class="card" id="detail-card">
+                    <div class="card-title" id="detail-date-title">기록 상세 보기</div>
+                    <div id="detail-content">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 20px 0;">
+                            달력에서 날짜를 클릭하면 해당 날짜의 기록을 확인할 수 있습니다.
+                        </p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 메시지 -->
+    <div id="toast" class="toast">저장되었습니다.</div>
+
+    <script>
+        const EMOTIONS = ['기쁨', '행복', '평온', '설렘', '감사', '슬픔', '외로움', '불안', '두려움', '분노', '피로', '무기력'];
+        
+        const COLORS = [
+            { name: '빨강', hex: '#ef4444' },
+            { name: '주황', hex: '#f97316' },
+            { name: '노랑', hex: '#eab308' },
+            { name: '연두', hex: '#84cc16' },
+            { name: '초록', hex: '#10b981' },
+            { name: '청록', hex: '#14b8a6' },
+            { name: '파랑', hex: '#3b82f6' },
+            { name: '남색', hex: '#6366f1' },
+            { name: '보라', hex: '#a855f7' },
+            { name: '분홍', hex: '#ec4899' },
+            { name: '회색', hex: '#64748b' },
+            { name: '검정', hex: '#1e293b' }
+        ];
+
+        let currentSelectedDate = getFormattedDate(new Date());
+        let activeMonthDate = new Date();
+        let selectedEmotion = null;
+        let selectedColor = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initEmotionGrid();
+            initColorGrid();
+            renderCalendar();
+            selectDate(currentSelectedDate);
+        });
+
+        function getFormattedDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function initEmotionGrid() {
+            const container = document.getElementById('emotion-grid');
+            container.innerHTML = '';
+            EMOTIONS.forEach(emotion => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'emotion-btn';
+                btn.textContent = emotion;
+                btn.onclick = () => selectEmotion(emotion);
+                container.appendChild(btn);
+            });
+        }
+
+        function initColorGrid() {
+            const container = document.getElementById('color-grid');
+            container.innerHTML = '';
+            COLORS.forEach(color => {
+                const item = document.createElement('div');
+                item.className = 'color-item';
+                item.onclick = () => selectColor(color);
+
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color.hex;
+
+                const name = document.createElement('span');
+                name.className = 'color-name';
+                name.textContent = color.name;
+
+                item.appendChild(swatch);
+                item.appendChild(name);
+                container.appendChild(item);
+            });
+        }
+
+        function selectEmotion(emotion) {
+            selectedEmotion = emotion;
+            const buttons = document.querySelectorAll('.emotion-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent === emotion) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+            document.getElementById('selected-emotion-text').textContent = emotion;
+        }
+
+        function selectColor(color) {
+            selectedColor = color;
+            const items = document.querySelectorAll('.color-item');
+            COLORS.forEach((c, idx) => {
+                if (c.name === color.name) {
+                    items[idx].classList.add('selected');
+                } else {
+                    items[idx].classList.remove('selected');
+                }
+            });
+            document.getElementById('selected-color-text').textContent = color.name;
+            document.getElementById('selected-color-dot').style.backgroundColor = color.hex;
+        }
+
+        function selectDate(dateStr) {
+            currentSelectedDate = dateStr;
+            document.getElementById('form-date-title').textContent = `${dateStr} 기록 작성 / 수정`;
+            document.getElementById('detail-date-title').textContent = `${dateStr} 기록 상세`;
+
+            resetForm();
+
+            const record = getRecordFromStorage(dateStr);
+            if (record) {
+                if (record.emotion) selectEmotion(record.emotion);
+                if (record.color) selectColor(record.color);
+                document.getElementById('reason-input').value = record.reason || '';
+                document.getElementById('q1-input').value = record.q1 || '';
+                document.getElementById('q2-input').value = record.q2 || '';
+                document.getElementById('message-input').value = record.message || '';
+
+                document.getElementById('save-btn').textContent = '기록 수정 저장';
+                document.getElementById('delete-btn').style.display = 'block';
+
+                renderDetailView(record);
+            } else {
+                document.getElementById('save-btn').textContent = '기록 저장';
+                document.getElementById('delete-btn').style.display = 'none';
+                
+                document.getElementById('detail-content').innerHTML = `
+                    <p style="color: var(--text-secondary); text-align: center; padding: 20px 0;">
+                        ${dateStr}에 저장된 기록이 없습니다.<br>왼쪽에서 감정과 생각을 기록해 보세요.
+                    </p>
+                `;
+            }
+
+            renderCalendar();
+        }
+
+        function resetForm() {
+            selectedEmotion = null;
+            selectedColor = null;
+            
+            document.querySelectorAll('.emotion-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.color-item').forEach(item => item.classList.remove('selected'));
+            
+            document.getElementById('selected-emotion-text').textContent = '미선택';
+            document.getElementById('selected-color-text').textContent = '미선택';
+            document.getElementById('selected-color-dot').style.backgroundColor = '#ccc';
+
+            document.getElementById('reason-input').value = '';
+            document.getElementById('q1-input').value = '';
+            document.getElementById('q2-input').value = '';
+            document.getElementById('message-input').value = '';
+        }
+
+        function renderDetailView(record) {
+            const container = document.getElementById('detail-content');
+            container.innerHTML = `
+                <div class="record-view">
+                    <div class="record-view-item">
+                        <div class="record-view-label">선택한 감정 및 색상</div>
+                        <div class="record-view-content" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="summary-color-dot" style="background-color: ${record.color.hex};"></span>
+                            <strong>${record.emotion}</strong> (${record.color.name})
+                        </div>
+                    </div>
+                    <div class="record-view-item" style="margin-top: 12px;">
+                        <div class="record-view-label">색을 선택한 이유</div>
+                        <div class="record-view-content">${escapeHtml(record.reason) || '-'}</div>
+                    </div>
+                    <div class="record-view-item" style="margin-top: 12px;">
+                        <div class="record-view-label">오늘의 순간과 연결된 이유</div>
+                        <div class="record-view-content">${escapeHtml(record.q1) || '-'}</div>
+                    </div>
+                    <div class="record-view-item" style="margin-top: 12px;">
+                        <div class="record-view-label">내 마음이 가장 원하는 것</div>
+                        <div class="record-view-content">${escapeHtml(record.q2) || '-'}</div>
+                    </div>
+                    <div class="record-view-item" style="margin-top: 12px;">
+                        <div class="record-view-label">나에게 전하는 한마디</div>
+                        <div class="record-view-content" style="font-weight: 600; color: var(--accent-color);">${escapeHtml(record.message) || '-'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        function saveRecord() {
+            if (!selectedEmotion) {
+                showToast('오늘의 감정을 선택해 주세요.');
+                return;
+            }
+            if (!selectedColor) {
+                showToast('오늘의 색상을 선택해 주세요.');
+                return;
+            }
+
+            const record = {
+                date: currentSelectedDate,
+                emotion: selectedEmotion,
+                color: selectedColor,
+                reason: document.getElementById('reason-input').value,
+                q1: document.getElementById('q1-input').value,
+                q2: document.getElementById('q2-input').value,
+                message: document.getElementById('message-input').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            const allRecords = getAllRecordsFromStorage();
+            allRecords[currentSelectedDate] = record;
+            localStorage.setItem('color_emotion_records', JSON.stringify(allRecords));
+
+            showToast(`${currentSelectedDate} 기록이 저장되었습니다.`);
+            selectDate(currentSelectedDate);
+        }
+
+        function deleteRecord() {
+            if (!confirm(`${currentSelectedDate}의 기록을 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            const allRecords = getAllRecordsFromStorage();
+            if (allRecords[currentSelectedDate]) {
+                delete allRecords[currentSelectedDate];
+                localStorage.setItem('color_emotion_records', JSON.stringify(allRecords));
+                showToast('기록이 삭제되었습니다.');
+                selectDate(currentSelectedDate);
+            }
+        }
+
+        function getAllRecordsFromStorage() {
+            const data = localStorage.getItem('color_emotion_records');
+            return data ? JSON.parse(data) : {};
+        }
+
+        function getRecordFromStorage(dateStr) {
+            const records = getAllRecordsFromStorage();
+            return records[dateStr] || null;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function changeMonth(delta) {
+            activeMonthDate.setMonth(activeMonthDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = activeMonthDate.getFullYear();
+            const month = activeMonthDate.getMonth();
+
+            document.getElementById('calendar-month-year').textContent = `${year}년 ${month + 1}월`;
+
+            const grid = document.getElementById('calendar-grid');
+            const cells = grid.querySelectorAll('.calendar-cell');
+            cells.forEach(cell => cell.remove());
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            const startDayOfWeek = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            const records = getAllRecordsFromStorage();
+            const todayStr = getFormattedDate(new Date());
+
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell other-month';
+                cell.textContent = prevMonthLastDay - i;
+                grid.appendChild(cell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                
+                if (dateStr === todayStr) {
+                    cell.classList.add('today');
+                }
+                if (dateStr === currentSelectedDate) {
+                    cell.classList.add('selected-day');
+                }
+
+                const dayNumSpan = document.createElement('span');
+                dayNumSpan.textContent = day;
+                cell.appendChild(dayNumSpan);
+
+                if (records[dateStr] && records[dateStr].color) {
+                    const dot = document.createElement('div');
+                    dot.className = 'calendar-color-dot';
+                    dot.style.backgroundColor = records[dateStr].color.hex;
+                    cell.appendChild(dot);
+                }
+
+                cell.onclick = () => selectDate(dateStr);
+                grid.appendChild(cell);
+            }
+
+            const totalCells = startDayOfWeek + totalDays;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= remainingCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell other-month';
+                cell.textContent = i;
+                grid.appendChild(cell);
+            }
+        }
+    </script>
+</body>
+</html>
